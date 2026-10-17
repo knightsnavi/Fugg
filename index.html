@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0b0d12" />
+  <title>Fugg City</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="minimap-wrap">
+      <canvas id="minimap" width="200" height="200"></canvas>
+    </div>
+    <div id="stats">
+      <div id="money">$0</div>
+      <div id="wanted" aria-label="wanted level"></div>
+      <div id="health-bar"><div id="health-fill"></div></div>
+    </div>
+    <div id="objective" class="hidden">
+      <div id="objective-text"></div>
+      <div id="objective-timer"></div>
+    </div>
+    <div id="speedo" class="hidden"><span id="speed-val">0</span><span class="unit">km/h</span></div>
+    <div id="prompt" class="hidden"></div>
+    <div id="toast" class="hidden"></div>
+    <div id="bigmsg" class="hidden"></div>
+    <div id="clock">12:00</div>
+    <div id="top-buttons">
+      <button id="btn-cam" class="icon-btn" title="Camera">⟳</button>
+      <button id="btn-pause" class="icon-btn" title="Pause">❚❚</button>
+    </div>
+  </div>
+
+  <!-- Touch controls -->
+  <div id="touch" class="hidden">
+    <div id="joy-zone"></div>
+    <div id="look-zone"></div>
+    <div id="joy-base" class="hidden"><div id="joy-knob"></div></div>
+    <div id="touch-buttons">
+      <div class="btn-set" data-mode="foot">
+        <button class="tbtn big" data-act="jump">JUMP</button>
+        <button class="tbtn" data-act="sprint" data-toggle="1">RUN</button>
+        <button class="tbtn" data-act="interact">ENTER</button>
+      </div>
+      <div class="btn-set hidden" data-mode="car">
+        <button class="tbtn big gas" data-act="accel">GAS</button>
+        <button class="tbtn brake" data-act="brake">BRAKE</button>
+        <button class="tbtn" data-act="handbrake">E-BRK</button>
+        <button class="tbtn" data-act="interact">EXIT</button>
+        <button class="tbtn" data-act="horn">HORN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start screen -->
+  <div id="start" class="overlay">
+    <div class="panel">
+      <h1>FUGG CITY</h1>
+      <p class="tag">An open-world city. Steal cars. Run jobs. Outrun the cops.</p>
+      <button id="btn-start" class="primary">TAP TO PLAY</button>
+      <div class="controls-grid">
+        <div>
+          <h3>Keyboard + Mouse</h3>
+          <ul>
+            <li><b>WASD</b> move / drive</li>
+            <li><b>Mouse</b> look (click to lock)</li>
+            <li><b>Shift</b> sprint &nbsp; <b>Space</b> jump / handbrake</li>
+            <li><b>E</b> enter / exit car &nbsp; <b>H</b> horn</li>
+            <li><b>C</b> camera &nbsp; <b>Esc</b> pause</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Controller</h3>
+          <ul>
+            <li><b>L stick</b> move / steer &nbsp; <b>R stick</b> look</li>
+            <li><b>RT / LT</b> gas / brake</li>
+            <li><b>A</b> sprint / handbrake &nbsp; <b>X</b> jump</li>
+            <li><b>Y</b> enter / exit car &nbsp; <b>B</b> horn</li>
+            <li><b>Start</b> pause &nbsp; <b>Back</b> camera</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Touch</h3>
+          <ul>
+            <li><b>Left thumb</b> virtual stick</li>
+            <li><b>Right thumb</b> drag to look</li>
+            <li><b>Buttons</b> context actions</li>
+          </ul>
+        </div>
+      </div>
+      <p class="small" id="start-note"></p>
+    </div>
+  </div>
+
+  <!-- Pause menu -->
+  <div id="pause" class="overlay hidden">
+    <div class="panel">
+      <h2>PAUSED</h2>
+      <button id="btn-resume" class="primary">RESUME</button>
+      <div class="settings">
+        <label><input type="checkbox" id="opt-touch" /> Touch controls</label>
+        <label><input type="checkbox" id="opt-shadows" /> Shadows (high quality)</label>
+        <label><input type="checkbox" id="opt-invert" /> Invert look Y</label>
+        <label><input type="checkbox" id="opt-sound" checked /> Sound</label>
+        <label>Look sensitivity <input type="range" id="opt-sens" min="0.3" max="2" step="0.1" value="1" /></label>
+      </div>
+      <div id="pause-stats"></div>
+      <button id="btn-reset" class="danger">RESET SAVE</button>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

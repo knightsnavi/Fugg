@@ -15,9 +15,9 @@ export class Player {
     this.health = 100; this.money = 0; this.wanted = 0; this.vehicle = null;
     this.state = 'foot'; // foot | car | ragdoll | dead
     this.ragdollT = 0; this.invuln = 0; this.armedT = 0; this.jumpReady = true;
-    this.human = new Human({ skin: 0xe0ac69, shirt: 0x2f2f33, pants: 0x1c1f26, hair: 0x1b1b1b });
+    this.human = new Human({ skin: 0xe0ac69, shirt: 0x2a2a2e, pants: 0x1f2633, hair: 0x1b1b1b, rng: () => 0.5 });
     this.mesh = this.human.group; this.mesh.position.copy(this.pos);
-    this.gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.34), mat(0x222222, { metalness: 0.6, roughness: 0.4 })); this.gun.position.set(0, -0.6, 0.15); this.gun.visible = false; this.human.armR.add(this.gun);
+    this.gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.34), mat(0x222222, { metalness: 0.6, roughness: 0.4 })); this.gun.position.set(0, -0.03, 0.14); this.gun.visible = false; this.human.armR.hand.add(this.gun);
     game.scene.add(this.mesh);
   }
   get x() { return this.vehicle ? this.vehicle.pos.x : this.pos.x; }
@@ -97,11 +97,10 @@ export class Player {
     this.mesh.position.set(this.pos.x, this.pos.y, this.pos.z);
     this.human.baseY = this.pos.y;
     this.mesh.rotation.y = this.heading;
-    this.human.animate(Math.hypot(this.vel.x, this.vel.z), dt);
-    // weapon pose
     this.gun.visible = armed;
-    if (armed && (aiming || weapons.recoil > 0)) { this.human.armR.rotation.x = -Math.PI / 2 + weapons.recoil * 0.3 - this.game.cam.pitch * 0.5; this.human.armR.rotation.y = 0; }
-    else if (weapons.weapon.melee && weapons.recoil > 0) { this.human.armR.rotation.x = -1.6 * weapons.recoil; }
+    this.human.aimPitch = -this.game.cam.pitch * 0.6 + weapons.recoil * 0.25;
+    this.human.animate(Math.hypot(this.vel.x, this.vel.z), dt, { aiming: armed && (aiming || weapons.recoil > 0) });
+    if (weapons.weapon.melee && weapons.recoil > 0) { this.human.armR.rotation.x = -1.7 * weapons.recoil; this.human.armR.elbow.rotation.x = -0.4 * (1 - weapons.recoil); }
   }
   clampBounds() { this.game.city.clampToBounds(this.pos, 1); }
   hitByVehicle(v, nx, nz, vs) {
@@ -123,19 +122,19 @@ export class Player {
     v.brake = clamp(Math.max(input.brake, -input.moveY), 0, 1);
     v.handbrake = !!input.handbrake;
     this.pos.set(v.pos.x, v.y, v.pos.z);
-    if (v.type.bike) { this.human.animate(0, dt); this.human.legL.rotation.x = -1.1; this.human.legR.rotation.x = -1.1; this.human.armL.rotation.x = -0.9; this.human.armR.rotation.x = -0.9; this.human.torso.rotation.x = 0.25; }
+    if (v.type.bike) this.human.animate(0, dt);
   }
   enterVehicle(v) {
     this.vehicle = v; v.driver = 'player'; v.playerOwned = true; this.state = 'car';
     this.vel.set(0, 0, 0); this.gun.visible = false;
-    if (v.type.bike) { v.mesh.add(this.mesh); this.mesh.position.set(0, 0.55, -0.25); this.mesh.rotation.set(0, 0, 0); this.human.baseY = 0.55; }
+    if (v.type.bike) { v.mesh.add(this.mesh); this.mesh.position.set(0, 0.42, -0.1); this.mesh.rotation.set(0, 0, 0); this.human.baseY = 0.42; this.human.pose = 'ride'; }
     else this.human.setVisible(false);
     this.game.input.setMode('car');
   }
   exitVehicle() {
     const v = this.vehicle; if (!v) return;
     v.driver = null; v.throttle = 0; v.brake = 0.3; v.steer = 0; v.handbrake = false;
-    if (v.type.bike) { this.game.scene.add(this.mesh); for (const part of [this.human.legL, this.human.legR, this.human.armL, this.human.armR, this.human.torso]) part.rotation.x = 0; }
+    if (v.type.bike) { this.game.scene.add(this.mesh); this.human.resetPose(); }
     const lx = Math.cos(v.heading), lz = -Math.sin(v.heading);
     this.pos.set(v.pos.x + lx * (v.type.w / 2 + 0.9), 0, v.pos.z + lz * (v.type.w / 2 + 0.9));
     this.heading = v.heading; this.vehicle = null; this.state = 'foot';

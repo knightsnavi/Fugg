@@ -64,7 +64,7 @@ export class LaneDriver {
       }
     } else {
       // traffic lights: stop line before the intersection
-      const stopDist = E.len - s - CFG.roadWidth / 2 - 1.5;
+      const stopDist = E.len - s - CFG.roadWidth / 2 - 3.4;
       if (stopDist > -0.5 && stopDist < 2 + speed * speed / (2 * 6) + 1 && !city.lightGreen(E.to, E.axis, g.time)) { if (stopDist > -0.5) desired = Math.min(desired, Math.max(0, stopDist * 1.5)); }
       if (this.scared > 0) { this.scared -= dt; desired = v.type.maxSpeed * 0.8; }
     }

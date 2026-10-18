@@ -32,7 +32,7 @@ export const dist2 = (ax, az, bx, bz) => { const dx = ax - bx, dz = az - bz; ret
 /** Merge indexed BufferGeometries that share position/normal/uv (+ optional color). */
 export function mergeGeometries(geos) {
   let vCount = 0, iCount = 0, hasColor = false;
-  for (const g of geos) { vCount += g.attributes.position.count; iCount += g.index.count; if (g.attributes.color) hasColor = true; }
+  for (const g of geos) { if (!g.index) { const n = g.attributes.position.count; const idx = new Uint32Array(n); for (let k = 0; k < n; k++) idx[k] = k; g.setIndex(new THREE.BufferAttribute(idx, 1)); } vCount += g.attributes.position.count; iCount += g.index.count; if (g.attributes.color) hasColor = true; }
   const pos = new Float32Array(vCount * 3), nor = new Float32Array(vCount * 3), uv = new Float32Array(vCount * 2);
   const col = hasColor ? new Float32Array(vCount * 3) : null;
   const idx = vCount > 65535 ? new Uint32Array(iCount) : new Uint16Array(iCount);

@@ -128,3 +128,18 @@ export class Fires {
     }
   }
 }
+
+/** Tire marks: ring buffer of flat dark quads. */
+export class Skids {
+  constructor(scene, max = 700) {
+    this.max = max; this.i = 0; this.count = 0;
+    const g = new THREE.PlaneGeometry(0.28, 0.9); g.rotateX(-Math.PI / 2);
+    this.mesh = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ color: 0x0c0c0c, transparent: true, opacity: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3 }), max);
+    this.mesh.count = 0; this.mesh.frustumCulled = false; scene.add(this.mesh); this.m = new THREE.Matrix4(); this.q = new THREE.Quaternion(); this.e = new THREE.Euler(); this.s = new THREE.Vector3(1, 1, 1); this.v = new THREE.Vector3();
+  }
+  add(x, y, z, heading, strength = 1) {
+    const i = this.i; this.i = (this.i + 1) % this.max; this.count = Math.min(this.max, this.count + 1);
+    this.q.setFromEuler(this.e.set(0, heading, 0)); this.s.set(1, 1, 0.9 + strength); this.m.compose(this.v.set(x, y + 0.025, z), this.q, this.s);
+    this.mesh.setMatrixAt(i, this.m); this.mesh.count = this.count; this.mesh.instanceMatrix.needsUpdate = true;
+  }
+}

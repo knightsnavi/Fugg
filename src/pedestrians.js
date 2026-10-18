@@ -15,10 +15,9 @@ export class Ped {
     this.speed = cop ? 4.8 : rand(rng, 1.1, 1.9); this.radius = 0.4;
     this.node = null; this.prev = null; this.target = null; this.fleeT = 0; this.downT = 0; this.deadT = 0; this.idleT = 0; this.shootT = rand(rng, 0.5, 1.5);
     this.human = cop
-      ? new Human({ skin: pick(rng, SKIN), shirt: 0x1f3a93, pants: 0x101c4a, hair: 0x1a1a1a })
-      : new Human({ skin: pick(rng, SKIN), shirt: pick(rng, SHIRTS), pants: pick(rng, PANTS), hair: pick(rng, [0x1a1a1a, 0x3b2a1a, 0x7a5230, 0xd9c27a, 0x555555]) });
+      ? new Human({ skin: pick(rng, SKIN), shirt: 0x1f3a93, pants: 0x101c4a, hair: 0x1a1a1a, cop: true, rng })
+      : new Human({ skin: pick(rng, SKIN), shirt: pick(rng, SHIRTS), pants: pick(rng, PANTS), hair: pick(rng, [0x1a1a1a, 0x3b2a1a, 0x7a5230, 0xd9c27a, 0x555555]), rng });
     this.mesh = this.human.group; this.mesh.userData.ped = this;
-    if (cop) { const cap = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.12, 0.36), this.human.head.material.clone()); cap.material.color.setHex(0x1f3a93); cap.position.y = 0.4; this.human.head.add(cap); }
     this.lastHitBy = null;
   }
   setNode(n) { this.node = n; this.pos.set(n.x, 0.15, n.z); this.pickNext(); this.mesh.position.copy(this.pos); }
@@ -112,8 +111,7 @@ export class Ped {
     resolveCircle(city.colliders, p.x, p.z, this.radius, _res); if (_res.hit) { p.x = _res.x; p.z = _res.z; }
     this.mesh.position.set(p.x, p.y, p.z); this.human.baseY = p.y; this.mesh.rotation.y = this.heading;
     this.human.animate(Math.hypot(this.vel.x, this.vel.z), dt);
-    // aim pose
-    this.human.armR.rotation.x = spd > 0 ? this.human.armR.rotation.x : -Math.PI / 2;
+    if (spd === 0 && los) { this.human.armR.rotation.x = -Math.PI / 2; this.human.armR.rotation.z = 0; this.human.armR.elbow.rotation.x = 0; }
   }
   nearestNode() {
     const nodes = this.game.city.sidewalkNodes; let best = nodes[0], bd = Infinity;

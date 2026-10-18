@@ -42,7 +42,7 @@ export class ThirdPersonCamera {
       const boxes = hash.query(x - 0.3, x + 0.3, z - 0.3, z + 0.3, _tmp);
       let blocked = false;
       for (const b of boxes) { if (b.kind !== 'building') continue; if (x > b.minX - 0.3 && x < b.maxX + 0.3 && z > b.minZ - 0.3 && z < b.maxZ + 0.3 && y < b.height) { blocked = true; break; } }
-      if (blocked) { d = Math.max(1.0, s - 0.6); break; }
+      if (blocked) { d = Math.max(1.0, s - 0.9); break; }
     }
     this.pos.set(this.look.x + dx * d, Math.max(0.6, this.look.y + dy * d), this.look.z + dz * d);
     if (this.shake > 0) { this.shake = Math.max(0, this.shake - dt * 3); this.pos.x += (Math.random() - 0.5) * this.shake * 0.5; this.pos.y += (Math.random() - 0.5) * this.shake * 0.5; }

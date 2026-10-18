@@ -8,6 +8,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0b0d12" />
   <title>Fugg City</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600;800&display=swap" />
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon-192.png" />
@@ -38,7 +40,7 @@
     <div id="toast" class="hidden"></div>
     <div id="bigmsg" class="hidden"></div>
     <div id="clock">12:00</div>
-    <div id="weapon" class="hidden"><span id="weapon-name">Fists</span><span id="weapon-ammo"></span></div>
+    <div id="weapon" class="hidden"><span id="weapon-icon">✊</span><span id="weapon-name">Fists</span><span id="weapon-ammo"></span></div>
     <div id="crosshair" class="hidden"></div>
     <div id="top-buttons">
       <button id="btn-cam" class="icon-btn" title="Camera">⟳</button>
@@ -70,8 +72,10 @@
     </div>
   </div>
 
+  <div id="loading" class="overlay"><div class="panel"><h1>FUGG CITY</h1><p class="tag">Building the city…</p></div></div>
+
   <!-- Start screen -->
-  <div id="start" class="overlay">
+  <div id="start" class="overlay hidden">
     <div class="panel">
       <h1>FUGG CITY</h1>
       <p class="tag">An open-world city. Steal cars. Run jobs. Outrun the cops.</p>
@@ -118,7 +122,8 @@
       <button id="btn-resume" class="primary">RESUME</button>
       <div class="settings">
         <label><input type="checkbox" id="opt-touch" /> Touch controls</label>
-        <label><input type="checkbox" id="opt-shadows" /> Shadows (high quality)</label>
+        <label><input type="checkbox" id="opt-shadows" /> Shadows</label>
+        <label><input type="checkbox" id="opt-bloom" /> Glow / bloom</label>
         <label><input type="checkbox" id="opt-invert" /> Invert look Y</label>
         <label><input type="checkbox" id="opt-sound" checked /> Sound</label>
         <label>Look sensitivity <input type="range" id="opt-sens" min="0.3" max="2" step="0.1" value="1" /></label>

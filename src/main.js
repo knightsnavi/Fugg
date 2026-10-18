@@ -2,13 +2,18 @@ import * as THREE from 'three';
 import { CFG } from './config.js';
 import { City } from './city.js';
 import { Player } from './player.js';
-import { Vehicle, CAR_COLORS, collideVehicles } from './vehicle.js';
+import { Vehicle, CAR_COLORS, collideVehicles, setVehicleQuality } from './vehicle.js';
+import { Sky } from './sky.js';
+import { EffectComposer } from '../vendor/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from '../vendor/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { ThirdPersonCamera } from './camera.js';
 import { DayNight } from './daynight.js';
 import { HUD } from './hud.js';
 import { Input } from './input.js';
 import { GameAudio } from './audio.js';
-import { Particles, Tracers, Decals, Rain, Fires } from './effects.js';
+import { Particles, Tracers, Decals, Rain, Fires, Skids } from './effects.js';
 import { WeaponSystem } from './weapons.js';
 import { Pedestrians } from './pedestrians.js';
 import { Traffic } from './traffic.js';
@@ -17,6 +22,7 @@ import { Missions } from './missions.js';
 import { mulberry32, pick } from './util.js';
 
 const SAVE_KEY = 'fugg-city-save-v1';
+const _tmpV = new THREE.Vector3();
 const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
 class Game {
@@ -28,15 +34,17 @@ class Game {
     this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(65, 1, 0.1, 1500);
-    this.settings = Object.assign({ touch: isTouchDevice, shadows: !isTouchDevice, invertY: false, sound: true, sens: 1 }, this.loadSettings());
+    this.settings = Object.assign({ touch: isTouchDevice, shadows: !isTouchDevice, bloom: !isTouchDevice, invertY: false, sound: true, sens: 1 }, this.loadSettings());
+    setVehicleQuality(!isTouchDevice);
     this.applyQuality();
 
     this.rng = mulberry32(CFG.seed + 7);
     this.time = 0; this.paused = false; this.started = false; this.nearVehicle = null; this.heat = 0;
     this.city = new City(this.scene, CFG.seed);
     this.daynight = new DayNight(this.scene, this.city, { shadows: this.settings.shadows });
+    this.sky = new Sky(this.scene, this.renderer);
     this.fx = { particles: new Particles(this.scene), tracers: new Tracers(this.scene), decals: new Decals(this.scene), rain: new Rain(this.scene) };
-    this.fx.fires = new Fires(this.fx.particles);
+    this.fx.fires = new Fires(this.fx.particles); this.fx.skids = new Skids(this.scene);
     this.player = new Player(this);
     this.vehicles = [];
     this.input = new Input(this.canvas);
@@ -53,6 +61,7 @@ class Game {
     this.load();
     this.bindUI();
     this.resize(); window.addEventListener('resize', () => this.resize());
+    document.getElementById('loading').classList.add('hidden'); document.getElementById('start').classList.remove('hidden');
     this.last = performance.now();
     requestAnimationFrame((t) => this.frame(t));
   }
@@ -61,8 +70,16 @@ class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.settings.shadows ? 2 : 1.5));
     this.renderer.shadowMap.enabled = !!this.settings.shadows;
     if (this.daynight) this.daynight.sun.castShadow = !!this.settings.shadows;
+    if (this.settings.bloom && !this.composer) {
+      this.composer = new EffectComposer(this.renderer);
+      this.composer.addPass(new RenderPass(this.scene, this.camera));
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.55, 0.5, 0.9);
+      this.composer.addPass(this.bloom); this.composer.addPass(new OutputPass());
+    }
+    if (this.composer) this.resize();
   }
-  resize() { const w = window.innerWidth, h = window.innerHeight; this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); }
+  resize() { const w = window.innerWidth, h = window.innerHeight; this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); if (this.composer) { this.composer.setSize(w, h); this.composer.setPixelRatio(this.renderer.getPixelRatio()); } }
+  render() { if (this.settings.bloom && this.composer) this.composer.render(); else this.renderer.render(this.scene, this.camera); }
   spawnWorld() {
     const c = this.city; const center = c.block(Math.floor(c.N / 2), Math.floor(c.N / 2));
     this.spawnPoint = { x: center.minX + 2, z: center.minZ + 1.5 };
@@ -80,7 +97,8 @@ class Game {
     $('btn-start').addEventListener('click', () => this.start());
     $('btn-resume').addEventListener('click', () => this.setPaused(false));
     $('btn-reset').addEventListener('click', () => { if (confirm('Reset all progress?')) { localStorage.removeItem(SAVE_KEY); location.reload(); } });
-    const optTouch = $('opt-touch'), optSh = $('opt-shadows'), optInv = $('opt-invert'), optSnd = $('opt-sound'), optSens = $('opt-sens');
+    const optTouch = $('opt-touch'), optSh = $('opt-shadows'), optInv = $('opt-invert'), optSnd = $('opt-sound'), optSens = $('opt-sens'), optBloom = $('opt-bloom');
+    optBloom.checked = this.settings.bloom; optBloom.addEventListener('change', () => { this.settings.bloom = optBloom.checked; this.applyQuality(); this.saveSettings(); });
     optTouch.checked = this.settings.touch; optSh.checked = this.settings.shadows; optInv.checked = this.settings.invertY; optSnd.checked = this.settings.sound; optSens.value = this.settings.sens;
     optTouch.addEventListener('change', () => { this.settings.touch = optTouch.checked; this.input.setTouchEnabled(this.settings.touch); this.saveSettings(); });
     optSh.addEventListener('change', () => { this.settings.shadows = optSh.checked; this.applyQuality(); this.saveSettings(); });
@@ -158,12 +176,17 @@ class Game {
     requestAnimationFrame((t) => this.frame(t));
     let dt = (now - this.last) / 1000; this.last = now;
     if (dt > 0.05) dt = 0.05;
-    if (!this.started) { this.cam.yaw += dt * 0.1; this.cam.update(0, this.player, { lookX: 0, lookY: 0 }); this.daynight.update(0, this.player.pos, this.fx.rain); this.renderer.render(this.scene, this.camera); return; }
+    if (!this.started) { this.cam.yaw += dt * 0.1; this.cam.update(0, this.player, { lookX: 0, lookY: 0 }); this.daynight.update(0, this.player.pos, this.fx.rain); this.updateSky(dt); this.render(); return; }
     if (this.paused) return;
     this.time += dt;
     this.input.update(dt);
     this.step(dt);
-    this.renderer.render(this.scene, this.camera);
+    this.render();
+  }
+  updateSky(dt) {
+    const d = this.daynight;
+    this.sky.update(dt, this.camera.position, { sunDir: d.sunDir, day: d.day, night: d.night, dusk: d.dusk, cloudiness: d.cloudiness });
+    if (this.bloom) this.bloom.strength = 0.28 + d.night * 0.22;
   }
   step(dt) {
     const p = this.player, inp = this.input.s;
@@ -208,7 +231,17 @@ class Game {
     this.missions.update(dt);
     this.cam.update(dt, p, inp, this.weapons.aiming);
     this.daynight.update(dt, p.worldPos, this.fx.rain);
+    this.updateSky(dt);
     this.city.updateTrafficLights(this.time);
+    // vehicle lights, skids, exhaust
+    const lightsOn = this.daynight.night > 0.35 || this.daynight.rain > 0.5;
+    for (const v of this.vehicles) v.lightsOn = lightsOn;
+    const pv = p.vehicle;
+    if (pv && !pv.wrecked) {
+      const sliding = Math.abs(pv.vLat || 0) > 2.2 && pv.speed > 3; const hardBrake = pv.brake > 0.6 && pv.forwardSpeed() > 9;
+      if (sliding || hardBrake) for (const side of [-1, 1]) { const w = pv.rearWheelPos(side, _tmpV); this.fx.skids.add(w.x, pv.y, w.z, pv.heading, sliding ? 1 : 0.5); if (sliding && Math.random() < 0.5) this.fx.particles.emit(w.x, 0.3, w.z, { count: 1, color: [0.55, 0.55, 0.55], speed: 1.2, spread: 0.5, size: 1.6, life: 0.9, grav: 1, shrink: 0.5, up: 0.5 }); }
+      if (pv.throttle > 0.4 && pv.speed < 14 && Math.random() < 0.35) { const w = pv.rearWheelPos(-0.7, _tmpV); this.fx.particles.emit(w.x, 0.3, w.z, { count: 1, color: [0.25, 0.25, 0.25], speed: 0.6, spread: 0.4, size: 0.7, life: 0.7, grav: 0.8, shrink: 0.4, up: 0.4 }); }
+    }
     this.fx.particles.update(dt); this.fx.tracers.update(dt); this.fx.fires.update(dt); this.fx.rain.update(dt, this.cam.pos);
     // headlights
     const hv = p.vehicle; const night = this.daynight.night > 0.4;

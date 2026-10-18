@@ -14,7 +14,7 @@ export class DayNight {
     this.hemi = new THREE.HemisphereLight(0x9fb3c8, 0x3a3630, 0.8); scene.add(this.hemi);
     this.ambient = new THREE.AmbientLight(0xffffff, 0.12); scene.add(this.ambient);
     scene.fog = new THREE.Fog(0x7a8794, 90, 520);
-    scene.background = new THREE.Color(0x6f8699);
+    scene.background = null; this.sunDir = new THREE.Vector3(0, 1, 0); this.day = 1; this.dusk = 0; this.cloudiness = 0.3;
     this.cDay = new THREE.Color(0x6f8699); this.cDusk = new THREE.Color(0xb0623a); this.cNight = new THREE.Color(0x05070e);
     this.fogDay = new THREE.Color(0x7f8d9a); this.fogNight = new THREE.Color(0x070a12); this.fogDusk = new THREE.Color(0x9a5e42);
     this.col = new THREE.Color(); this.night = 0;
@@ -41,13 +41,16 @@ export class DayNight {
     this.ambient.intensity = lerp(0.18, 0.16, day);
     const bg = this.col.copy(this.cNight).lerp(this.cDay, day).lerp(this.cDusk, dusk * 0.6 * (1 - overcast));
     bg.multiplyScalar(1 - overcast * 0.35);
-    this.scene.background.copy(bg);
+    this.sunDir.set(sx, sy, sz).normalize(); this.day = day; this.dusk = dusk; this.cloudiness = 0.3 + overcast * 0.65; void bg;
     this.scene.fog.color.copy(this.fogNight).lerp(this.fogDay, day).lerp(this.fogDusk, dusk * 0.5 * (1 - overcast)).multiplyScalar(1 - overcast * 0.3);
     this.scene.fog.near = lerp(90, 30, overcast); this.scene.fog.far = lerp(520, 220, overcast);
     const night = 1 - day; this.night = night;
-    this.city.buildingMaterial.emissiveIntensity = night * 0.9;
+    for (const k in this.city.facades || {}) this.city.facades[k].emissiveIntensity = night * 0.65;
     if (this.city.lampMaterial) this.city.lampMaterial.emissiveIntensity = night * 2.5;
-    if (this.city.lampGlow) this.city.lampGlow.material.opacity = night * 0.55;
+    if (this.city.lampGlow) this.city.lampGlow.material.opacity = night * 0.3;
+    for (const m of this.city.billboardMats || []) m.emissiveIntensity = night * 0.9;
+    if (this.city.storeMat) this.city.storeMat.emissiveIntensity = night * 0.7;
+    if (this.city.neonMesh) this.city.neonMesh.material.emissiveIntensity = 0.6 + night * 1.4;
     if (this.city.roadMaterial) { this.city.roadMaterial.roughness = lerp(0.9, 0.35, overcast); this.city.roadMaterial.metalness = lerp(0.05, 0.4, overcast); }
     if (rainFx) rainFx.intensity = this.rain;
   }

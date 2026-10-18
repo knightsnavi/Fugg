@@ -8,7 +8,7 @@ export class TouchControls {
     this.knob = document.getElementById('joy-knob');
     this.joy = { x: 0, y: 0 };
     this.lookDX = 0; this.lookDY = 0;
-    this.btn = { jump: false, sprint: false, interact: false, handbrake: false, horn: false, accel: false, brake: false, pause: false, camera: false };
+    this.btn = { jump: false, sprint: false, interact: false, handbrake: false, horn: false, accel: false, brake: false, pause: false, camera: false, fire: false, aim: false, weapon: false };
     this.joyId = null; this.joyOrigin = { x: 0, y: 0 };
     this.lookId = null; this.lookLast = { x: 0, y: 0 };
     this.radius = 50;
@@ -58,6 +58,7 @@ export class TouchControls {
       const act = b.dataset.act; const toggle = b.dataset.toggle === '1';
       const down = (e) => {
         e.preventDefault(); e.stopPropagation();
+        if (act === 'weapon') { this.btn.weapon = true; b.classList.add('pressed'); setTimeout(() => b.classList.remove('pressed'), 120); return; }
         if (toggle) { this.btn[act] = !this.btn[act]; b.classList.toggle('on', this.btn[act]); }
         else { this.btn[act] = true; b.classList.add('pressed'); }
         try { b.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
@@ -75,7 +76,7 @@ export class TouchControls {
   setMode(mode) {
     for (const set of this.root.querySelectorAll('.btn-set')) set.classList.toggle('hidden', set.dataset.mode !== mode);
     // release everything when switching context
-    for (const k in this.btn) if (k !== 'sprint') this.btn[k] = false;
+    for (const k in this.btn) if (k !== 'sprint' && k !== 'aim') this.btn[k] = false;
     for (const b of this.root.querySelectorAll('.tbtn.pressed')) b.classList.remove('pressed');
   }
   setPrompt(mode, text) {

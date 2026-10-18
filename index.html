@@ -9,6 +9,9 @@
   <meta name="theme-color" content="#0b0d12" />
   <title>Fugg City</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <script type="importmap">
     { "imports": { "three": "./vendor/three.module.js" } }
   </script>
@@ -35,6 +38,8 @@
     <div id="toast" class="hidden"></div>
     <div id="bigmsg" class="hidden"></div>
     <div id="clock">12:00</div>
+    <div id="weapon" class="hidden"><span id="weapon-name">Fists</span><span id="weapon-ammo"></span></div>
+    <div id="crosshair" class="hidden"></div>
     <div id="top-buttons">
       <button id="btn-cam" class="icon-btn" title="Camera">⟳</button>
       <button id="btn-pause" class="icon-btn" title="Pause">❚❚</button>
@@ -48,9 +53,12 @@
     <div id="joy-base" class="hidden"><div id="joy-knob"></div></div>
     <div id="touch-buttons">
       <div class="btn-set" data-mode="foot">
-        <button class="tbtn big" data-act="jump">JUMP</button>
+        <button class="tbtn big fire" data-act="fire">FIRE</button>
+        <button class="tbtn" data-act="jump">JUMP</button>
         <button class="tbtn" data-act="sprint" data-toggle="1">RUN</button>
         <button class="tbtn" data-act="interact">ENTER</button>
+        <button class="tbtn" data-act="aim" data-toggle="1">AIM</button>
+        <button class="tbtn small" data-act="weapon">WPN</button>
       </div>
       <div class="btn-set hidden" data-mode="car">
         <button class="tbtn big gas" data-act="accel">GAS</button>
@@ -76,6 +84,7 @@
             <li><b>Mouse</b> look (click to lock)</li>
             <li><b>Shift</b> sprint &nbsp; <b>Space</b> jump / handbrake</li>
             <li><b>E</b> enter / exit car &nbsp; <b>H</b> horn</li>
+            <li><b>LMB</b> fire / punch &nbsp; <b>RMB</b> aim &nbsp; <b>Q / wheel</b> weapon</li>
             <li><b>C</b> camera &nbsp; <b>Esc</b> pause</li>
           </ul>
         </div>
@@ -83,8 +92,8 @@
           <h3>Controller</h3>
           <ul>
             <li><b>L stick</b> move / steer &nbsp; <b>R stick</b> look</li>
-            <li><b>RT / LT</b> gas / brake</li>
-            <li><b>A</b> sprint / handbrake &nbsp; <b>X</b> jump</li>
+            <li><b>RT / LT</b> gas / brake &nbsp;(on foot: fire / aim)</li>
+            <li><b>A</b> sprint / handbrake &nbsp; <b>X</b> jump &nbsp; <b>LB/RB</b> weapon</li>
             <li><b>Y</b> enter / exit car &nbsp; <b>B</b> horn</li>
             <li><b>Start</b> pause &nbsp; <b>Back</b> camera</li>
           </ul>

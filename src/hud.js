@@ -2,10 +2,13 @@ export class HUD {
   constructor(game) {
     this.game = game;
     const $ = (id) => document.getElementById(id);
-    this.el = { hud: $('hud'), money: $('money'), wanted: $('wanted'), health: $('health-fill'), objective: $('objective'), objText: $('objective-text'), objTimer: $('objective-timer'), speedo: $('speedo'), speed: $('speed-val'), prompt: $('prompt'), toast: $('toast'), big: $('bigmsg'), clock: $('clock'), compass: $('compass') };
+    this.el = { hud: $('hud'), weapon: $('weapon'), weaponName: $('weapon-name'), weaponAmmo: $('weapon-ammo'), crosshair: $('crosshair'), money: $('money'), wanted: $('wanted'), health: $('health-fill'), objective: $('objective'), objText: $('objective-text'), objTimer: $('objective-timer'), speedo: $('speedo'), speed: $('speed-val'), prompt: $('prompt'), toast: $('toast'), big: $('bigmsg'), clock: $('clock'), compass: $('compass') };
     this.map = $('minimap'); this.ctx = this.map.getContext('2d');
-    this.toastT = 0; this.bigT = 0; this.moneyShown = 0;
+    this.toastT = 0; this.bigT = 0; this.moneyShown = 0; this.wantedFlash = 0;
+    this.vignette = document.createElement('div'); this.vignette.style.cssText = 'position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center, rgba(255,0,0,0) 55%, rgba(200,0,0,0.55) 100%);opacity:0;transition:opacity 0.15s;z-index:5'; document.body.appendChild(this.vignette); this.dmgT = 0;
   }
+  flashDamage() { this.dmgT = 0.5; this.vignette.style.opacity = '1'; }
+  flashWanted() { this.wantedFlash = 1.2; }
   show() { this.el.hud.classList.remove('hidden'); }
   toast(text, secs = 3) { this.el.toast.textContent = text; this.el.toast.classList.remove('hidden'); this.toastT = secs; }
   big(text, secs = 3) { this.el.big.textContent = text; this.el.big.classList.remove('hidden'); this.bigT = secs; }
@@ -21,6 +24,13 @@ export class HUD {
     this.el.wanted.innerHTML = stars;
     this.el.health.style.width = p.health + '%';
     this.el.clock.textContent = g.daynight.clockString();
+    if (this.dmgT > 0) { this.dmgT -= dt; if (this.dmgT <= 0) this.vignette.style.opacity = '0'; }
+    if (this.wantedFlash > 0) { this.wantedFlash -= dt; this.el.wanted.style.opacity = Math.floor(this.wantedFlash * 8) % 2 ? '0.3' : '1'; } else this.el.wanted.style.opacity = '1';
+    const w = g.weapons;
+    if (p.state === 'foot' || p.state === 'ragdoll') { this.el.weapon.classList.remove('hidden'); this.el.weaponName.textContent = w.weapon.name; this.el.weaponAmmo.textContent = w.weapon.melee ? '' : String(w.ammo[w.current]); }
+    else this.el.weapon.classList.add('hidden');
+    const showCross = p.state === 'foot' && !w.weapon.melee && (w.aiming || !g.settings.touch);
+    this.el.crosshair.classList.toggle('hidden', !showCross); this.el.crosshair.classList.toggle('locked', !!w.target);
     if (p.state === 'car') { this.el.speedo.classList.remove('hidden'); this.el.speed.textContent = Math.round(p.vehicle.speed * 3.6); }
     else this.el.speedo.classList.add('hidden');
     const m = g.missions?.active;
@@ -42,11 +52,13 @@ export class HUD {
       if (b.type === 'buildings') { c.fillStyle = '#6a6d74'; c.fillRect(b.minX + 3, b.minZ + 3, b.maxX - b.minX - 6, b.maxZ - b.minZ - 6); }
     }
     // water edge
-    c.strokeStyle = '#2a6fa8'; c.lineWidth = 6; c.strokeRect(-city.bound, -city.bound, city.bound * 2, city.bound * 2);
+    c.strokeStyle = '#2a6fa8'; c.lineWidth = 6; const bb = city.bounds; c.strokeRect(bb.minX, bb.minZ, bb.maxX - bb.minX, city.half + city.beachDepth - bb.minZ);
     // markers
     for (const mk of g.missions?.markers || []) { c.fillStyle = mk.color; c.beginPath(); c.arc(mk.x, mk.z, 4, 0, Math.PI * 2); c.fill(); }
     const tgt = g.missions?.active?.target; if (tgt) { c.fillStyle = '#ffcc33'; c.beginPath(); c.arc(tgt.x, tgt.z, 5, 0, Math.PI * 2); c.fill(); }
     for (const pk of g.missions?.packages || []) { if (!pk.collected && Math.abs(pk.x - px) < r && Math.abs(pk.z - pz) < r) { c.fillStyle = '#7ad7ff'; c.fillRect(pk.x - 2, pk.z - 2, 4, 4); } }
+    const mt = g.missions?.active?.ped; if (mt && mt.alive) { c.fillStyle = '#ff3c5c'; c.beginPath(); c.arc(mt.pos.x, mt.pos.z, 3, 0, Math.PI * 2); c.fill(); }
+    for (const cp of g.police?.cops || []) { if (cp.state === 'cop') { c.fillStyle = '#4aa3ff'; c.beginPath(); c.arc(cp.pos.x, cp.pos.z, 2, 0, Math.PI * 2); c.fill(); } }
     // vehicles
     for (const v of g.vehicles) {
       if (v === g.player.vehicle) continue;

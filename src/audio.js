@@ -55,6 +55,14 @@ export class GameAudio {
     if (on && !this.hornNode) { const o = this.ctx.createOscillator(); o.type = 'square'; o.frequency.value = 420; const o2 = this.ctx.createOscillator(); o2.type = 'square'; o2.frequency.value = 520; const g = this.ctx.createGain(); g.gain.value = this.enabled ? 0.08 : 0; o.connect(g); o2.connect(g); g.connect(this.master); o.start(); o2.start(); this.hornNode = { o, o2, g }; }
     else if (!on && this.hornNode) { const h = this.hornNode; h.o.stop(); h.o2.stop(); this.hornNode = null; }
   }
+  gunshot(type = 'pistol', vol = 1) {
+    if (!this.ctx || !this.enabled) return;
+    if (type === 'shotgun') { this.noise(0.35, 0.7 * vol); this._blip(90, 0.3, 'sawtooth', 0.3 * vol, -60); }
+    else if (type === 'smg') { this.noise(0.08, 0.35 * vol); this._blip(260, 0.06, 'square', 0.12 * vol, -150); }
+    else { this.noise(0.14, 0.5 * vol); this._blip(180, 0.12, 'sawtooth', 0.2 * vol, -120); }
+  }
+  hornBlip() { if (!this.ctx || !this.enabled) return; this._blip(430, 0.35, 'square', 0.06); this._blip(540, 0.35, 'square', 0.06); }
+  explosion() { if (!this.ctx || !this.enabled) return; this.noise(1.2, 0.9); this._blip(60, 1.0, 'sine', 0.6, -40); }
   pickup() { this._blip(880, 0.15, 'sine', 0.25, 440); this._blip(1320, 0.25, 'sine', 0.2); }
   cash() { this._blip(660, 0.1, 'square', 0.15); setTimeout(() => this._blip(990, 0.15, 'square', 0.15), 90); }
   hurt() { this._blip(180, 0.25, 'sawtooth', 0.25, -120); }

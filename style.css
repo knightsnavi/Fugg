@@ -89,7 +89,7 @@ html, body {
   position: absolute; right: calc(16px + var(--safe-right)); bottom: calc(24px + var(--safe-bottom));
   pointer-events: none;
 }
-.btn-set { position: relative; width: 230px; height: 200px; }
+.btn-set { position: relative; width: 240px; height: 230px; }
 .tbtn {
   position: absolute; width: 66px; height: 66px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5);
   background: rgba(20,24,32,0.6); color: #fff; font-weight: 800; font-size: 12px; pointer-events: auto;
@@ -100,9 +100,19 @@ html, body {
 .tbtn.gas.pressed { background: rgba(80,220,120,0.85); }
 .tbtn.brake.pressed { background: rgba(255,80,80,0.85); }
 /* foot layout */
-.btn-set[data-mode="foot"] .tbtn[data-act="jump"] { right: 0; bottom: 20px; }
-.btn-set[data-mode="foot"] .tbtn[data-act="sprint"] { right: 100px; bottom: 0; }
-.btn-set[data-mode="foot"] .tbtn[data-act="interact"] { right: 110px; bottom: 90px; }
+.tbtn.small { width: 52px; height: 52px; font-size: 11px; }
+.tbtn.fire.pressed { background: rgba(255,120,60,0.9); }
+.btn-set[data-mode="foot"] .tbtn[data-act="fire"] { right: 0; bottom: 0; }
+.btn-set[data-mode="foot"] .tbtn[data-act="jump"] { right: 100px; bottom: 0; }
+.btn-set[data-mode="foot"] .tbtn[data-act="sprint"] { right: 160px; bottom: 80px; }
+.btn-set[data-mode="foot"] .tbtn[data-act="interact"] { right: 90px; bottom: 90px; }
+.btn-set[data-mode="foot"] .tbtn[data-act="aim"] { right: 10px; bottom: 100px; }
+.btn-set[data-mode="foot"] .tbtn[data-act="weapon"] { right: 60px; bottom: 165px; }
+#weapon { position: absolute; right: calc(14px + var(--safe-right)); top: calc(96px + var(--safe-top)); text-align: right; text-shadow: 0 2px 4px #000; font-weight: 700; font-size: 15px; }
+#weapon-ammo { margin-left: 8px; color: var(--accent); font-variant-numeric: tabular-nums; }
+#crosshair { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border: 2px solid rgba(255,255,255,0.85); border-radius: 50%; box-shadow: 0 0 4px #000; }
+#crosshair::after { content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; background: #fff; border-radius: 50%; }
+#crosshair.locked { border-color: #ff5a3c; }
 /* car layout */
 .btn-set[data-mode="car"] .tbtn[data-act="accel"] { right: 0; bottom: 0; }
 .btn-set[data-mode="car"] .tbtn[data-act="brake"] { right: 100px; bottom: 0; }
@@ -144,7 +154,7 @@ button.danger { background: transparent; color: var(--danger); border: 1px solid
   #minimap-wrap { width: 120px; height: 120px; }
   #money { font-size: 20px; }
   #bigmsg { font-size: 40px; }
-  #speedo { bottom: calc(230px + var(--safe-bottom)); font-size: 26px; }
+  #speedo { left: calc(150px + var(--safe-left)); right: auto; bottom: calc(20px + var(--safe-bottom)); font-size: 26px; }
 }
 @media (max-height: 480px) {
   .controls-grid { display: none; }

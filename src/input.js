@@ -1,14 +1,14 @@
 import { clamp } from './util.js';
 import { TouchControls } from './touch.js';
 
-const BUTTONS = ['jump', 'sprint', 'interact', 'handbrake', 'horn', 'pause', 'camera'];
+const BUTTONS = ['jump', 'sprint', 'interact', 'handbrake', 'horn', 'pause', 'camera', 'fire', 'aim', 'weaponNext', 'weaponPrev'];
 
 /** Unified input: keyboard+mouse, Gamepad API, touch. Produces one action state per frame. */
 export class Input {
   constructor(canvas) {
     this.canvas = canvas;
     this.keys = new Set();
-    this.mouseDown = false;
+    this.mouseDown = false; this.mouseRight = false; this.wheel = 0;
     this.mouseDX = 0; this.mouseDY = 0;
     this.sensitivity = 1;
     this.invertY = false;
@@ -25,12 +25,14 @@ export class Input {
       if (e.repeat) return;
       this.keys.add(e.code);
       if (e.code === 'Escape' && this.onPause) this.onPause();
-      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
     });
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.keys.clear());
-    canvas.addEventListener('mousedown', (e) => { if (e.button === 0) { this.mouseDown = true; if (!this.touchEnabled && document.pointerLockElement !== canvas) canvas.requestPointerLock?.(); } });
-    window.addEventListener('mouseup', () => { this.mouseDown = false; });
+    canvas.addEventListener('mousedown', (e) => { if (e.button === 0) { this.mouseDown = true; if (!this.touchEnabled && document.pointerLockElement !== canvas) canvas.requestPointerLock?.(); } if (e.button === 2) this.mouseRight = true; });
+    window.addEventListener('mouseup', (e) => { if (e.button === 0) this.mouseDown = false; if (e.button === 2) this.mouseRight = false; });
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    canvas.addEventListener('wheel', (e) => { this.wheel += Math.sign(e.deltaY); e.preventDefault(); }, { passive: false });
     window.addEventListener('mousemove', (e) => {
       if (document.pointerLockElement === canvas || this.mouseDown) { this.mouseDX += e.movementX; this.mouseDY += e.movementY; }
     });
@@ -69,6 +71,12 @@ export class Input {
     if (K('KeyE') || K('KeyF') || K('Enter')) s.interact = true;
     if (K('KeyH')) s.horn = true;
     if (K('KeyC')) s.camera = true;
+    if (this.mouseDown && document.pointerLockElement === this.canvas) s.fire = true;
+    if (K('ControlLeft')) s.fire = true;
+    if (this.mouseRight) s.aim = true;
+    if (K('Tab') || K('KeyQ') || this.wheel > 0) s.weaponNext = true;
+    if (this.wheel < 0) s.weaponPrev = true;
+    this.wheel = 0;
 
     // --- gamepad
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -86,12 +94,13 @@ export class Input {
       const lx = dz(ax[2] || 0), ly = dz(ax[3] || 0);
       s.lookX += lx * 2.6 * dt * this.sensitivity; s.lookY += ly * 2.0 * dt * this.sensitivity;
       s.accel = Math.max(s.accel, bv(7)); s.brake = Math.max(s.brake, bv(6));
-      if (this.mode === 'foot') { if (s.moveY > 0 && b(7)) s.sprint = true; }
       if (b(0)) { s.sprint = true; s.handbrake = true; }
       if (b(2)) s.jump = true;
       if (b(3)) s.interact = true;
       if (b(1)) s.horn = true;
-      if (b(5)) s.handbrake = true;
+      if (b(5)) { s.handbrake = true; s.weaponNext = true; }
+      if (b(4)) s.weaponPrev = true;
+      if (this.mode === 'foot') { if (bv(7) > 0.5) s.fire = true; if (bv(6) > 0.5) s.aim = true; }
       if (b(9)) s.pause = true;
       if (b(8) || b(11)) s.camera = true;
     }
@@ -109,6 +118,9 @@ export class Input {
       if (t.btn.horn) s.horn = true;
       if (t.btn.accel) s.accel = 1;
       if (t.btn.brake) s.brake = 1;
+      if (t.btn.fire) s.fire = true;
+      if (t.btn.aim) s.aim = true;
+      if (t.btn.weapon) { s.weaponNext = true; t.btn.weapon = false; }
       if (t.btn.pause) { s.pause = true; t.btn.pause = false; }
       if (t.btn.camera) { s.camera = true; t.btn.camera = false; }
     }

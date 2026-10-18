@@ -10,7 +10,7 @@ export class ThirdPersonCamera {
     this.shake = 0;
   }
   toggleMode() { this.mode = (this.mode + 1) % 3; }
-  update(dt, player, input) {
+  update(dt, player, input, aiming = false) {
     const inCar = player.state === 'car';
     const look = Math.abs(input.lookX) + Math.abs(input.lookY) > 1e-4;
     this.yaw -= input.lookX; this.pitch = clamp(this.pitch + input.lookY, -0.35, 1.2);
@@ -25,12 +25,13 @@ export class ThirdPersonCamera {
     } else if (!inCar && this.idle > 2.5 && Math.hypot(player.vel.x, player.vel.z) > 1) {
       if (Math.abs(angleDiff(this.yaw, player.heading)) < 2.4) this.yaw = dampAngle(this.yaw, player.heading, 0.8, dt);
     }
-    const base = inCar ? [7.5, 11, 4.5][this.mode] : [5.5, 8.5, 3][this.mode];
+    const base = aiming ? 2.6 : inCar ? [7.5, 11, 4.5][this.mode] : [5.5, 8.5, 3][this.mode];
     const speedZoom = inCar ? Math.min(3, player.vehicle.speed * 0.06) : 0;
-    this.dist = damp(this.dist, base + speedZoom, 4, dt);
-    const h = inCar ? 1.3 : 1.5;
+    this.dist = damp(this.dist, base + speedZoom, aiming ? 10 : 4, dt);
+    const h = inCar ? 1.3 : aiming ? 1.6 : 1.5;
     const tp = player.worldPos;
     this.look.set(tp.x, (inCar ? player.vehicle.y : player.pos.y) + h, tp.z);
+    if (aiming) { this.look.x += -Math.cos(this.yaw) * 0.7; this.look.z += Math.sin(this.yaw) * 0.7; } // over the right shoulder
     const cp = Math.cos(this.pitch), sp = Math.sin(this.pitch);
     const dx = -Math.sin(this.yaw) * cp, dz = -Math.cos(this.yaw) * cp, dy = sp;
     // collide camera ray against buildings
